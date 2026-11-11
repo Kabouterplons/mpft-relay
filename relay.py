@@ -55,6 +55,18 @@ def handle_client(sock, addr, room, role):
     role_name = "Sender" if role == ROLE_SENDER else "Receiver"
     log.info("[%s] verbonden: %s (%s)", room, addr, role_name)
 
+    # Receivers only receive — they never send data back to the relay,
+    # so select() would always time out for them. Use no timeout for
+    # Receivers; dead ones are cleaned up when the Sender's sendall fails.
+    # Senders should send continuously; timeout detects dead Senders.
+    sel_timeout = TIMEOUT if role == ROLE_SENDER else None
+
+    # Enable TCP keepalives so the OS detects dead connections.
+    try:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    except Exception:
+        pass
+
     with rooms_lock:
         if room not in rooms:
             rooms[room] = {}
@@ -62,7 +74,7 @@ def handle_client(sock, addr, room, role):
 
     try:
         while True:
-            ready, _, _ = select.select([sock], [], [], TIMEOUT)
+            ready, _, _ = select.select([sock], [], [], sel_timeout)
             if not ready:
                 log.info("[%s] timeout: %s", room, addr)
                 break
