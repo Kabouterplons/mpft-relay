@@ -25,7 +25,7 @@ log = logging.getLogger("relay")
 HOST    = "0.0.0.0"
 PORT    = int(os.environ.get("PORT", 12345))
 BUFFER  = 65536
-TIMEOUT = 60  # seconden zonder data -> verbinding verbreken
+TIMEOUT = 300  # seconden zonder data -> verbinding verbreken
 
 ROLE_SENDER   = 0x01
 ROLE_RECEIVER = 0x02
